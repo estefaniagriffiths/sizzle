@@ -1,2 +1,2 @@
-# social-media-platform
+# Sizzle
 A social media app for sharing recipes.

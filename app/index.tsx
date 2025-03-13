@@ -1,8 +1,11 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
 
 export default function WelcomeScreen() {
+  const router = useRouter();
+
   return (
     <LinearGradient
       colors={['#EE9B00', '#BB3E03']}
@@ -11,14 +14,15 @@ export default function WelcomeScreen() {
     <View style={styles.container}>
       <Text style={styles.title}>Sizzle</Text>
       <Text style={styles.subtitle}>Discover unique recipes.</Text>
-
       <TouchableOpacity 
         style={styles.signUpButton} 
+        onPress={() => router.push('SignUpScreen')}
       >
       <Text style={styles.buttonText}>Sign Up</Text>
       </TouchableOpacity>
       <TouchableOpacity 
-        style={styles.signInButton} 
+        style={styles.signInButton}
+        onPress={() => router.push('SignInScreen')} 
       >
         <Text style={styles.buttonText}>Sign In</Text>
       </TouchableOpacity>

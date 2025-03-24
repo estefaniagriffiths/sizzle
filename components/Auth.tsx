@@ -59,7 +59,19 @@ export function useAuth() {
     setLoading(false)
   }
 
+  async function signOut() {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      Alert.alert(error.message);
+    } 
+    else {
+      Alert.alert('Logged out.')
+      router.replace('/');
+    }
+  }
+  
+
   return {
-    signInWithEmail, signUpWithEmail, loading
+    signInWithEmail, signUpWithEmail, signOut, loading
   }
 }

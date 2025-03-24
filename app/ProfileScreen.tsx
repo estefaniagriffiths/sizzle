@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { useRouter } from 'expo-router';
+import { useAuth } from '../components/Auth';
 
 export default function ProfileScreen() {
   const [username, setUsername] = useState<string | null>(null);
+  const { signOut } = useAuth();
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
@@ -35,7 +37,13 @@ export default function ProfileScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.username}>Hello, {username}!</Text>
+        <Text style={styles.username}>Hello, {username}!</Text>
+        <TouchableOpacity
+        style={styles.button}
+        onPress={signOut} 
+        >
+        <Text style={styles.buttonText}>Log Out</Text>      
+        </TouchableOpacity>
     </View>
   );
 }
@@ -51,4 +59,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: 'white',
   },
+  button: {
+    backgroundColor: '#005F73',
+    borderRadius: 12,
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  buttonText: {
+    color: 'white',
+    fontSize: 16,
+  }
 });

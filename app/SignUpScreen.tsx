@@ -5,9 +5,10 @@ import { Link } from 'expo-router';
 import { useAuth } from '../components/Auth';
 
 export default function SignUpScreen() {
+  const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const { signUpWithEmail, loading } = useAuth();
+  const { signUpWithEmail, loading } = useAuth()
 
   return (
     <LinearGradient
@@ -18,6 +19,14 @@ export default function SignUpScreen() {
         <Text style={styles.title}>Sign Up</Text>
         <Text style={styles.subtitle}>Join cooks from around the world.</Text>
         <View style={styles.box}>
+          <TextInput
+            style={styles.input}
+            placeholder="username"
+            autoCapitalize="none"
+            placeholderTextColor="#808080"
+            value={username}
+            onChangeText={setUsername}
+          />
           <TextInput
             style={styles.input}
             placeholder="email@address.com"
@@ -37,7 +46,7 @@ export default function SignUpScreen() {
           />
           <TouchableOpacity 
           style={styles.button} 
-          onPress={() => signUpWithEmail(email, password)} 
+          onPress={() => signUpWithEmail(username, email, password)} 
           disabled={loading}
           >
           <Text style={styles.buttonText}>Create Account</Text>

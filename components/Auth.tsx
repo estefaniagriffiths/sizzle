@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { Alert } from 'react-native'
 import { supabase } from '../lib/supabase'
-
+import { useRouter } from 'expo-router';
 
 export function useAuth() {
   const [loading, setLoading] = useState(false)
+  const router = useRouter();
 
   async function signInWithEmail(email: string, password: string) {
     setLoading(true)
@@ -13,23 +14,48 @@ export function useAuth() {
       password,
     })
 
-    if (error) Alert.alert(error.message)
-    else Alert.alert('Logged in')
+    if (error) { 
+      Alert.alert(error.message)
+    }
+    else { 
+      Alert.alert('Logged in')
+      router.replace('/ProfileScreen')
+    }
+
     setLoading(false)
   }
 
-  async function signUpWithEmail(email: string, password: string) {
+  async function signUpWithEmail(username: string, email: string, password: string) {
     setLoading(true)
-    const {
-      data: { session },
-      error,
-    } = await supabase.auth.signUp({
+
+    const { data: userExists } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('username', username)
+      .single()
+
+    if (userExists) {
+      Alert.alert('Username is unavailable.')
+      setLoading(false)
+      return
+    }
+
+    const { data, error, } = await supabase.auth.signUp({
       email,
       password,
+      options: { 
+        data: { username },
+      }
     })
 
-    if (error) Alert.alert(error.message)
-    if (!session) Alert.alert('Please check your inbox for email verification!')
+    if (error) { 
+      Alert.alert(error.message)
+    }
+    else if (!data?.session) {
+      Alert.alert('Please check your inbox for email verification!')
+      router.replace('/SignInScreen')
+    }
+
     setLoading(false)
   }
 
@@ -37,22 +63,3 @@ export function useAuth() {
     signInWithEmail, signUpWithEmail, loading
   }
 }
-
-
-/* OLD SIGN IN
-const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-
-  async function signInWithEmail() {
-    setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({
-      email: email,
-      password: password,
-    });
-
-    if (error) Alert.alert('Error', error.message);
-
-    setLoading(false);
-  }
-*/

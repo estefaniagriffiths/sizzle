@@ -19,7 +19,7 @@ export function useAuth() {
     }
     else { 
       Alert.alert('Logged in')
-      router.replace('/ProfileScreen')
+      router.replace('/Home')
     }
 
     setLoading(false)

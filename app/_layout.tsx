@@ -7,6 +7,7 @@ return (
         <Stack.Screen name="SignInScreen" options={{ headerShown: false }} />
         <Stack.Screen name="SignUpScreen" options={{ headerShown: false }} />
         <Stack.Screen name="ProfileScreen" options={{ headerShown: false }} />
+        <Stack.Screen name="Home" options={{ headerShown: false }} />
     </Stack>
   )
 }

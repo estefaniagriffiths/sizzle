@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity } from 'rea
 import { supabase } from '../lib/supabase';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../components/Auth';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function ProfileScreen() {
   const [username, setUsername] = useState<string | null>(null);
@@ -37,6 +38,8 @@ export default function ProfileScreen() {
 
   return (
     <View style={styles.container}>
+
+      <View style={styles.content}>
         <Text style={styles.username}>Hello, {username}!</Text>
         <TouchableOpacity
         style={styles.button}
@@ -44,6 +47,19 @@ export default function ProfileScreen() {
         >
         <Text style={styles.buttonText}>Log Out</Text>      
         </TouchableOpacity>
+      </View>
+
+      <View style={styles.bottomNav}>
+        <TouchableOpacity onPress={() => router.push('Search')} style={styles.navButton}>
+          <Ionicons name="search" size={28} color="black" />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => router.push('Home')} style={styles.navButton}>
+          <Ionicons name="home" size={28} color="black" />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => router.push('ProfileScreen')} style={styles.navButton}>
+          <Ionicons name="person" size={28} color="black" />
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -54,6 +70,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#EE9B00',
+  },
+  content: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   username: {
     fontSize: 16,
@@ -70,5 +91,18 @@ const styles = StyleSheet.create({
   buttonText: {
     color: 'white',
     fontSize: 16,
-  }
+  },
+  bottomNav: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingVertical: 10,
+    borderTopWidth: 2,
+    borderTopColor: '#000',
+    paddingHorizontal: 20,
+    width: '90%',
+  },
+  navButton: {
+    flex: 1,
+    alignItems: 'center',
+  },
 });

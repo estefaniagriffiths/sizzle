@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
-import { supabase } from '../lib/supabase';
+import { supabase } from '../../lib/supabase';
 import { useRouter } from 'expo-router';
-import { useAuth } from '../components/Auth';
+import { useAuth } from '../../components/Auth';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function ProfileScreen() {
@@ -46,18 +46,6 @@ export default function ProfileScreen() {
         onPress={signOut} 
         >
         <Text style={styles.buttonText}>Log Out</Text>      
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.bottomNav}>
-        <TouchableOpacity onPress={() => router.push('Search')} style={styles.navButton}>
-          <Ionicons name="search" size={28} color="black" />
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => router.push('Home')} style={styles.navButton}>
-          <Ionicons name="home" size={28} color="black" />
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => router.push('ProfileScreen')} style={styles.navButton}>
-          <Ionicons name="person" size={28} color="black" />
         </TouchableOpacity>
       </View>
     </View>

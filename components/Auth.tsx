@@ -19,7 +19,7 @@ export function useAuth() {
     }
     else { 
       Alert.alert('Logged in')
-      router.replace('/Home')
+      router.replace('/(tabs)')
     }
 
     setLoading(false)

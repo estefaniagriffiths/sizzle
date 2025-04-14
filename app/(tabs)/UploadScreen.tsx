@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, TextInput, Alert, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
-import { supabase } from '../lib/supabase';
+import { supabase } from '../../lib/supabase';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
+import { Session } from "@supabase/supabase-js";
 
 export const unstable_settings = {
   headerShown: false,
@@ -13,12 +14,25 @@ export const unstable_settings = {
 export default function UploadScreen() {
   const router = useRouter();
 
-  const [recipeName, setRecipeName] = useState('');
+  const [recipeTitle, setRecipeTitle] = useState('');
   const [recipeDescription, setRecipeDescription] = useState('');
   const [ingredients, setIngredients] = useState('');
-  const [dietaryTags, setDietaryTags] = useState('');
   const [videoUri, setVideoUri] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [userId, setUserId] = useState("");
+  const [session, setSession] = useState<Session | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUserId(session?.user?.id || "");
+    })
+
+    supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      setUserId(session?.user?.id || "");
+    });
+  }, [])
 
   const handleSelectVideo = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -39,10 +53,10 @@ export default function UploadScreen() {
   };
 
   const handleUploadRecipe = async () => {
-    if (!recipeName || !recipeDescription || !ingredients || !dietaryTags || !videoUri) {
-      Alert.alert("Missing Fields", "Please fill in all fields and select a video.");
-      return;
-    }
+    // if (!recipeTitle || !recipeDescription || !ingredients || !dietaryTags || !videoUri) {
+    //   Alert.alert("Missing Fields", "Please fill in all fields and select a video.");
+    //   return;
+    // }
 
     setUploading(true);
 
@@ -76,14 +90,15 @@ export default function UploadScreen() {
 
       // Insert recipe details and video URL into the "recipes" table
       const { error: insertError } = await supabase
-        .from('recipes')
+        .from('posts')
         .insert([
           {
-            recipe_name: recipeName,
-            recipe_description: recipeDescription,
-            ingredients,
-            dietary_tags: dietaryTags,
-            video_url: publicUrl,
+            created_at: new Date().toISOString(),
+            user_id: userId,
+            title: recipeTitle,
+            image_link: publicUrl,
+            description: recipeDescription,
+            recipe: ingredients,
           },
         ]);
 
@@ -94,7 +109,7 @@ export default function UploadScreen() {
       }
 
       Alert.alert("Success", "Recipe uploaded successfully!");
-      router.push('home');
+      router.push('(tabs)');
     } catch (error) {
       Alert.alert("Error", "An unexpected error occurred while uploading the recipe.");
     } finally {
@@ -110,8 +125,8 @@ export default function UploadScreen() {
           style={styles.input}
           placeholder="Recipe Name"
           maxLength={500}
-          value={recipeName}
-          onChangeText={setRecipeName}
+          value={recipeTitle}
+          onChangeText={setRecipeTitle}
         />
         <TextInput
           style={[styles.input, styles.multilineInput]}
@@ -129,14 +144,6 @@ export default function UploadScreen() {
           onChangeText={setIngredients}
           multiline
         />
-        <TextInput
-          style={[styles.input, styles.multilineInput]}
-          placeholder="Dietary Tags (Must be separated by commas)"
-          maxLength={2000}
-          value={dietaryTags}
-          onChangeText={setDietaryTags}
-          multiline
-        />
         <TouchableOpacity style={styles.button} onPress={handleSelectVideo}>
           <Text style={styles.buttonText}>{videoUri ? "Video Selected" : "Select Video"}</Text>
         </TouchableOpacity>
@@ -144,17 +151,6 @@ export default function UploadScreen() {
           <Text style={styles.buttonText}>{uploading ? "Uploading..." : "Upload Recipe"}</Text>
         </TouchableOpacity>
       </ScrollView>
-      <View style={styles.bottomNav}>
-        <TouchableOpacity onPress={() => router.push('Search')} style={styles.navButton}>
-          <Ionicons name="search" size={28} color="black" />
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => router.push('home')} style={styles.navButton}>
-          <Ionicons name="home" size={28} color="black" />
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => router.push('UserProfile')} style={styles.navButton}>
-          <Ionicons name="person" size={28} color="black" />
-        </TouchableOpacity>
-      </View>
     </LinearGradient>
   );
 }

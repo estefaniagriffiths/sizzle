@@ -22,7 +22,8 @@
     "react": "18.3.1",
     "react-native": "0.76.7",
     "react-native-loading-spinner-overlay": "^3.0.1",
-    "react-native-url-polyfill": "^2.0.0"
+    "react-native-url-polyfill": "^2.0.0",
+    "expo-image": "~2.0.7"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

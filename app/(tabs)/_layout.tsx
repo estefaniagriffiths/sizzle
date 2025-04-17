@@ -28,14 +28,6 @@ function TabBarIcon(props: {
           }}
         />
         <Tabs.Screen
-        name="PostView"
-        options={{
-            title: 'Post',
-            tabBarIcon: ({ color }) => <TabBarIcon name="list" color={color} />,
-            headerShown: false,
-        }}
-      />
-        <Tabs.Screen
         name="UploadScreen"
         options={{
           title: 'Upload',
@@ -49,6 +41,12 @@ function TabBarIcon(props: {
               title: 'Profile',
               tabBarIcon: ({ color }) => <TabBarIcon name="user" color={color} />,
               headerShown: false,
+          }}
+        />
+        <Tabs.Screen
+          name="PostView"
+          options={{
+            href: null, 
           }}
         />
         </Tabs>

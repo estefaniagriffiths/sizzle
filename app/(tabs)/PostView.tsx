@@ -1,17 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, Text, Image, ScrollView, ActivityIndicator } from 'react-native';
-import { supabase } from '../../lib/supabase';
+import { Image as ExpoImage } from 'expo-image';
 
 export default function PostView({ post }: { post: any }) {
     if (!post) return null;
 
     return (
         <View style={styles.card}>
-            <Image source={{ uri: post.image_link }} style={styles.image}/>
+            <ExpoImage source={{ uri: post.image_link }} style={styles.image}
+            contentFit="cover"
+            transition={100}
+            />
             <View style={[styles.align_left, {padding: 12}]}>
                 <Text style={[styles.title, {paddingBottom: 6}]}>{post.title}</Text>
-                <Text style={[styles.title, {paddingBottom: 6}]}>@{post.profiles?.username}</Text>
-                <Text style={{paddingBottom: 12}}>{post.description}</Text>
+                <Text style={{ paddingBottom: 12 }}>
+                    <Text style={{ fontWeight: 'bold' }}>@{post.profiles?.username}</Text> {post.description}
+                </Text>
                 <View style={[styles.hstack, {paddingBottom: 12}]}>
                     <View style={{paddingRight: 6}}>
                         <Text style={styles.tag}>tag</Text>

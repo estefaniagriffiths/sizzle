@@ -6,6 +6,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { Session } from "@supabase/supabase-js";
+import { decode } from 'base64-arraybuffer';
+import * as FileSystem from 'expo-file-system';
 
 export const unstable_settings = {
   headerShown: false,
@@ -17,7 +19,7 @@ export default function UploadScreen() {
   const [recipeTitle, setRecipeTitle] = useState('');
   const [recipeDescription, setRecipeDescription] = useState('');
   const [ingredients, setIngredients] = useState('');
-  const [videoUri, setVideoUri] = useState<string | null>(null);
+  const [imageUri, setImageUri] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [userId, setUserId] = useState("");
   const [session, setSession] = useState<Session | null>(null);
@@ -34,7 +36,7 @@ export default function UploadScreen() {
     });
   }, [])
 
-  const handleSelectVideo = async () => {
+  const handleSelectImage = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permissionResult.granted) {
       Alert.alert("Permission Required", "Permission to access media library is required!");
@@ -42,80 +44,92 @@ export default function UploadScreen() {
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['videos'],
+      mediaTypes: ['images'],
         allowsEditing: true,
         quality: 1,
       });
       
       if (!result.canceled && result.assets.length > 0) {
-        setVideoUri(result.assets[0].uri);
+        setImageUri(result.assets[0].uri);
       }
   };
 
   const handleUploadRecipe = async () => {
-    // if (!recipeTitle || !recipeDescription || !ingredients || !dietaryTags || !videoUri) {
-    //   Alert.alert("Missing Fields", "Please fill in all fields and select a video.");
-    //   return;
-    // }
-
-    setUploading(true);
-
+    if (!recipeTitle || !recipeDescription || !ingredients || !imageUri) {
+      Alert.alert("Missing Fields", "Please fill out all fields and select an image.");
+      return;
+    }
+  
     try {
-      // Fetch video file as a blob
-      const response = await fetch(videoUri);
-      const blob = await response.blob();
-
-      // Generate a unique file name using current timestamp and the original extension
-      const fileExt = videoUri.split('.').pop();
+      setUploading(true);
+  
+      const fileExt = imageUri.split('.').pop()?.toLowerCase();
       const fileName = `${Date.now()}.${fileExt}`;
-      const filePath = fileName;
-
-      // Upload video to Supabase storage (assumes a bucket named "videos" exists)
+      const filePath = `${userId}/${fileName}`;
+  
+      const fileContent = await FileSystem.readAsStringAsync(imageUri, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+  
+      const mimeType =
+        fileExt === 'png'
+          ? 'image/png'
+          : fileExt === 'jpg' || fileExt === 'jpeg'
+          ? 'image/jpeg'
+          : 'image/*';
+  
       const { error: uploadError } = await supabase.storage
-        .from('videos')
-        .upload(filePath, blob, {
-          contentType: 'video/mp4',
+        .from('images')
+        .upload(filePath, decode(fileContent), {
+          contentType: mimeType,
+          upsert: true,
         });
-
+  
       if (uploadError) {
-        Alert.alert("Upload Error", uploadError.message);
-        setUploading(false);
+        console.error(uploadError);
+        Alert.alert("Upload Error", "Failed to upload image.");
         return;
       }
-
-      // Get the public URL for the uploaded video
-      const { data: { publicUrl } } = supabase.storage
-        .from('videos')
+  
+      const { data: publicUrlData } = supabase.storage
+        .from('images')
         .getPublicUrl(filePath);
-
-      // Insert recipe details and video URL into the "recipes" table
-      const { error: insertError } = await supabase
-        .from('posts')
-        .insert([
-          {
-            created_at: new Date().toISOString(),
-            user_id: userId,
-            title: recipeTitle,
-            image_link: publicUrl,
-            description: recipeDescription,
-            recipe: ingredients,
-          },
-        ]);
-
+      const publicUrl = publicUrlData.publicUrl;
+  
+      console.log("Uploaded image URL:", publicUrl); 
+  
+      const { error: insertError } = await supabase.from('posts').insert([
+        {
+          created_at: new Date().toISOString(),
+          user_id: userId,
+          title: recipeTitle,
+          image_link: publicUrl,
+          description: recipeDescription,
+          recipe: ingredients,
+        },
+      ]);
+  
       if (insertError) {
-        Alert.alert("Database Error", insertError.message);
-        setUploading(false);
+        console.error(insertError);
+        Alert.alert("Upload Error", "Failed to save recipe data.");
         return;
       }
-
+  
       Alert.alert("Success", "Recipe uploaded successfully!");
-      router.push('(tabs)');
-    } catch (error) {
-      Alert.alert("Error", "An unexpected error occurred while uploading the recipe.");
+      setRecipeTitle('');
+      setRecipeDescription('');
+      setIngredients('');
+      setImageUri(null);
+      router.push('/'); 
+  
+    } catch (err) {
+      console.error(err);
+      Alert.alert("Unexpected Error", "Something went wrong.");
     } finally {
       setUploading(false);
     }
   };
+  
 
   return (
     <LinearGradient colors={['#EE9B00', '#BB3E03']} style={styles.gradient}>
@@ -144,8 +158,8 @@ export default function UploadScreen() {
           onChangeText={setIngredients}
           multiline
         />
-        <TouchableOpacity style={styles.button} onPress={handleSelectVideo}>
-          <Text style={styles.buttonText}>{videoUri ? "Video Selected" : "Select Video"}</Text>
+        <TouchableOpacity style={styles.button} onPress={handleSelectImage}>
+          <Text style={styles.buttonText}>{imageUri ? "Image Selected" : "Select Image"}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.button} onPress={handleUploadRecipe} disabled={uploading}>
           <Text style={styles.buttonText}>{uploading ? "Uploading..." : "Upload Recipe"}</Text>

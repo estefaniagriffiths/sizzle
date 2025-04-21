@@ -1,9 +1,13 @@
-import { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, TextInput } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, TextInput, FlatList, Dimensions, ScrollView } from 'react-native';
 import { supabase } from '../../lib/supabase';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { useAuth } from '../../components/Auth';
 import { MaterialIcons } from '@expo/vector-icons';
+import { Image as ExpoImage } from 'expo-image';
+
+const screenWidth = Dimensions.get('window').width;
+const imageSize = screenWidth / 3;
 
 export default function ProfileScreen() {
   const [username, setUsername] = useState<string | null>(null);
@@ -11,10 +15,12 @@ export default function ProfileScreen() {
   const [editedBio, setEditedBio] = useState<string>('');
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [posts, setPosts] = useState<any[]>([]);
   const { signOut } = useAuth();
   const router = useRouter();
 
-  useEffect(() => {
+  useFocusEffect(
+    useCallback(() => {
     async function getUser() {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
@@ -31,11 +37,25 @@ export default function ProfileScreen() {
           setBio(data.bio);
           setEditedBio(data.bio || '');
         }
+
+        const { data: postsData, error: postsError } = await supabase
+        .from('posts')
+        .select('id, image_link')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+        if (postsError) {
+          console.error('Error loading posts:', postsError.message);
+        } else {
+          setPosts(postsData);
+        }
+
         setLoading(false);
       }
     }
     getUser();
-  }, []);
+  }, [])
+);
 
   const handleEditPress = () => {
     setIsEditing(true);
@@ -66,7 +86,7 @@ export default function ProfileScreen() {
   }
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container}>
       {/* Top-right icon button */}
       <View style={styles.topRightEdit}>
         {isEditing ? (
@@ -96,20 +116,43 @@ export default function ProfileScreen() {
         )}
       </View>
 
+      <View style={{ marginTop: 200 }}>
+        <FlatList
+          data={posts}
+          keyExtractor={(item) => item.id}
+          numColumns={3}
+          scrollEnabled={false}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              onPress={() => router.push(`/post/${item.id}`)}
+              style={{ width: imageSize, height: imageSize, padding: 0.5 }}
+            >
+              <ExpoImage
+                source={{ uri: item.image_link }}
+                style={{ width: '100%', height: '100%' }}
+                contentFit="cover"
+                transition={100}
+              />
+            </TouchableOpacity>
+          )}
+        />
+      </View>
+
       {/* Footer content: Log Out button */}
       <View style={styles.topRightLogOut}>
         <TouchableOpacity style={styles.iconButton} onPress={signOut}>
           <MaterialIcons name="logout" size={24} color="white" />
         </TouchableOpacity>
       </View>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#EE9B00',
+    backgroundColor: '#F2F0EF',
+    paddingTop: 20,
   },
   topRightEdit: {
     position: 'absolute',
@@ -132,11 +175,11 @@ const styles = StyleSheet.create({
   username: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: 'white',
+    color: 'black',
   },
   bio: {
     fontSize: 14,
-    color: 'white',
+    color: '#757575',
     marginTop: 5,
   },
   textInput: {

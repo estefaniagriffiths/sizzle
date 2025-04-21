@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, TextInput, Alert, ScrollView, KeyboardAvoidingView, Platform, Keyboard, TouchableWithoutFeedback, SafeAreaView } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, TextInput, Alert, ScrollView, Keyboard, TouchableWithoutFeedback } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '../../lib/supabase';
-import { LinearGradient } from 'expo-linear-gradient';
 import * as ImagePicker from 'expo-image-picker';
 import { Session } from "@supabase/supabase-js";
 import { decode } from 'base64-arraybuffer';
@@ -168,13 +167,14 @@ export default function UploadScreen() {
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-    <LinearGradient colors={['#EE9B00', '#BB3E03']} style={styles.gradient}>
+      <View style={styles.wrapper}>
     <Text style={styles.headerText}>Upload Your Recipe</Text>
       <ScrollView style={styles.container}>
         <Text style={styles.sub}>Title</Text>
           <TextInput
             style={styles.input}
             placeholder="What's your recipe called?"
+            placeholderTextColor={"lightgray"}
             maxLength={500}
             value={recipeTitle}
             onChangeText={setRecipeTitle}
@@ -183,6 +183,7 @@ export default function UploadScreen() {
           <TextInput
             style={styles.input}
             placeholder="Describe your recipe."
+            placeholderTextColor={"lightgray"}
             maxLength={2000}
             value={recipeDescription}
             onChangeText={setRecipeDescription}
@@ -192,6 +193,7 @@ export default function UploadScreen() {
           <TextInput
             style={[styles.input, styles.multilineInput]}
             placeholder="What's in your recipe?"
+            placeholderTextColor={"lightgray"}
             maxLength={2000}
             value={ingredients}
             onChangeText={setIngredients}
@@ -202,6 +204,7 @@ export default function UploadScreen() {
         <TextInput
           style={[styles.input, styles.multilineInput]}
           placeholder="What are your recipe steps?"
+          placeholderTextColor={"lightgray"}
           maxLength={2000}
           value={recipeSteps}
           onChangeText={setRecipeSteps}
@@ -241,14 +244,15 @@ export default function UploadScreen() {
           <Text style={styles.buttonText}>{uploading ? "Uploading..." : "Upload Recipe"}</Text>
         </TouchableOpacity>
       </ScrollView>
-    </LinearGradient>
+      </View>
     </TouchableWithoutFeedback>
   );
 }
 
 const styles = StyleSheet.create({
-  gradient: {
+  wrapper: {
     flex: 1,
+    backgroundColor: '#F2F0EF',
   },
   container: {
     flex: 1,
@@ -257,14 +261,14 @@ const styles = StyleSheet.create({
   headerText: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: 'white',
+    color: 'black',
     marginBottom: 20,
     textAlign: 'center',
     paddingTop: 80,
   },
   sub: {
     fontSize: 16,
-    color: 'white',
+    color: '#757575',
   },
   input: {
     backgroundColor: 'white',
@@ -307,7 +311,7 @@ const styles = StyleSheet.create({
   },
   tagButton: {
     backgroundColor: '#fff',
-    borderColor: '#005F73',
+    borderColor: 'darkorange',
     borderWidth: 1,
     borderRadius: 20,
     paddingVertical: 6,
@@ -315,13 +319,13 @@ const styles = StyleSheet.create({
     margin: 4,
   },
   selectedTagButton: {
-    backgroundColor: '#005F73',
+    backgroundColor: 'darkorange',
   },
   tagText: {
-    color: '#005F73',
+    color: 'darkorange',
   },
   selectedTagText: {
-    color: '#fff',
+    color: 'white',
   },
   
 });

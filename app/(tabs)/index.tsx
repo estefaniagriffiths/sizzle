@@ -27,7 +27,7 @@ const HomeView = () => {
             const fetchPosts = async () => {
                 const { data, error } = await supabase
                 .from('posts')
-                .select('id, created_at, user_id, title, image_link, description, recipe, profiles:profiles!posts_user_id_fkey (username)')
+                .select('id, created_at, user_id, title, image_link, description, ingredients, recipe, profiles:profiles!posts_user_id_fkey (username), post_tags(tags(name))')
                 .order('created_at', { ascending: false });
             
                 console.log("Fetched posts:", data);
@@ -94,14 +94,16 @@ const HomeView = () => {
                 </View>
             </Modal>
 
-            <ScrollView style={styles.scrollView}>
+            <ScrollView 
+            style={styles.scrollView}
+            contentContainerStyle={{ paddingBottom: 150 }}
+            showsVerticalScrollIndicator={false}
+            >
             {loading ? (
                 <ActivityIndicator size="large" color="#BB3E03" />
             ) : (
                 posts.map((post) => (
-                <TouchableOpacity key={post.id} onPress={() => router.push(`/post/${post.id}`)}>
-                    <PostView post={post} />
-                  </TouchableOpacity>
+                    <PostView key={post.id} post={post} />
                 ))
             )}
             </ScrollView>

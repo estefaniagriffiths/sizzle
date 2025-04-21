@@ -18,7 +18,6 @@ export function useAuth() {
       Alert.alert(error.message)
     }
     else { 
-      Alert.alert('Logged in')
       router.replace('/(tabs)')
     }
 
@@ -66,7 +65,7 @@ export function useAuth() {
     } 
     else {
       Alert.alert('Logged out.')
-      router.replace('/');
+      router.replace('/SignInScreen');
     }
   }
   

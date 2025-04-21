@@ -1,9 +1,8 @@
-import React, { useState } from 'react';
 import { StyleSheet, View, Text, Image } from 'react-native';
+import CommentView from './CommentView';
 import FontAwesome from 'react-native-vector-icons/FontAwesome6';
 
-
-const PostView = () => {
+const PostDetail = () => {
     return (
         <View style={styles.container}>
             <View style={styles.post}>
@@ -20,17 +19,20 @@ const PostView = () => {
                             <Text style={styles.tag}>another tag</Text>
                         </View>
                     </View>
-                    <View style={[styles.hstack, {paddingLeft: '60%', justifyContent: 'space-between'}]}>
+                    <View style={[styles.hstack, {paddingLeft: '60%', justifyContent: 'space-between', paddingBottom: 12}]}>
                         <FontAwesome name="message" size={18} color="black" />
                         <FontAwesome name="heart" size={18} color="black" />
                         <FontAwesome name="bookmark" size={18} color="black" />
                     </View>
+                    <CommentView />
+                    <CommentView />
                 </View>
             </View>
         </View>
     );
 };
-export default PostView;
+
+export default PostDetail;
 
 const styles = StyleSheet.create({
     container: {

@@ -28,9 +28,9 @@ function TabBarIcon(props: {
           }}
         />
         <Tabs.Screen
-        name="PostView"
+        name="PostDetail"
         options={{
-            title: 'Post',
+            title: 'PostDetail',
             tabBarIcon: ({ color }) => <TabBarIcon name="list" color={color} />,
             headerShown: false,
         }}

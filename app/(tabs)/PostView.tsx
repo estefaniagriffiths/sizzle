@@ -1,33 +1,45 @@
-import React, { useState } from 'react';
-import { StyleSheet, View, Text, Image } from 'react-native';
+import React from 'react';
+import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
+import { Image as ExpoImage } from 'expo-image';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 
-const PostView = () => {
+export default function PostView({ post }: { post: any }) {
+    const router = useRouter();
+    
+    if (!post) return null;
+
     return (
-        <View style={styles.container}>
-            <View style={styles.post}>
-                <Image source={require('./chocolate-cake-and-ice-cream-recipe.jpeg')} style={styles.image}/>
-                <View style={[styles.align_left, {padding: 12}]}>
-                    <Text style={[styles.title, {paddingBottom: 6}]}>Triple Layer Chocolate Cake</Text>
-                    <Text style={{paddingBottom: 12}}>Description goes here</Text>
-                    <View style={[styles.hstack, {paddingBottom: 12}]}>
-                        <View style={{paddingRight: 6}}>
-                            <Text style={styles.tag}>tag</Text>
+        <View style={styles.card}>
+            <TouchableOpacity onPress={() => router.push(`/post/${post.id}`)}>
+            <ExpoImage source={{ uri: post.image_link }} style={styles.image}
+            contentFit="cover"
+            transition={100}
+            />
+            </TouchableOpacity>
+            <View style={[styles.align_left, {padding: 12}]}>
+                <Text style={[styles.title, {paddingBottom: 6}]}>{post.title}</Text>
+                <Text style={{ paddingBottom: 12 }}>
+                    <Text style={{ fontWeight: 'bold' }}>@{post.profiles?.username}</Text> {post.description}
+                </Text>
+                {post.post_tags && post.post_tags.length > 0 && (
+                    <View style={[styles.hstack, { paddingBottom: 12, flexWrap: 'wrap' }]}>
+                        {post.post_tags.map((pt: any, index: number) => (
+                        <View key={index} style={{ paddingRight: 6, paddingBottom: 6 }}>
+                            <Text style={styles.tag}>{pt.tags.name}</Text>
                         </View>
-                        <View style={{paddingRight: 6}}>
-                            <Text style={styles.tag}>another tag</Text>
-                        </View>
+                        ))}
                     </View>
-                    <View style={[styles.hstack, {justifyContent: 'space-between'}]}>
-                        <Text>Comment</Text>
-                        <Text>Repost</Text>
-                        <Text>Like</Text>
-                    </View>
+                    )}
+                <View style={[styles.hstack, {justifyContent: 'space-between'}]}>
+                    <Ionicons name="chatbubble-outline" size={24} color="black" />
+                    <Ionicons name="bookmark-outline" size={24} color="black" />
+                    <Ionicons name="heart-outline" size={24} color="black" />
                 </View>
             </View>
         </View>
     );
 };
-export default PostView;
 
 const styles = StyleSheet.create({
     container: {
@@ -57,8 +69,6 @@ const styles = StyleSheet.create({
     hstack: {
         flexDirection: 'row',
         alignContent: 'center',
-        // backgroundColor: 'green',
-        // width: '100%'
     },
     image: {
         width: '100%',
@@ -71,5 +81,27 @@ const styles = StyleSheet.create({
         color: 'white',
         backgroundColor: 'darkorange',
         borderRadius: 12
-    }
+    },
+    centered: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+      },
+      loadingText: {
+        marginTop: 10,
+        color: '#444',
+        fontSize: 16,
+      },
+      card: {
+        width: '100%',
+        marginBottom: 20,
+        borderRadius: 12,
+        overflow: 'hidden',
+        backgroundColor: '#fff',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+        elevation: 3,
+      },
 });

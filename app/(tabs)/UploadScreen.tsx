@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, TextInput, Alert, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, TextInput, Alert, ScrollView, Keyboard, TouchableWithoutFeedback } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '../../lib/supabase';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { Session } from "@supabase/supabase-js";
+import { decode } from 'base64-arraybuffer';
+import * as FileSystem from 'expo-file-system';
 
 export const unstable_settings = {
   headerShown: false,
@@ -16,11 +16,14 @@ export default function UploadScreen() {
 
   const [recipeTitle, setRecipeTitle] = useState('');
   const [recipeDescription, setRecipeDescription] = useState('');
+  const [recipeSteps, setRecipeSteps] = useState('');
   const [ingredients, setIngredients] = useState('');
-  const [videoUri, setVideoUri] = useState<string | null>(null);
+  const [imageUri, setImageUri] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [userId, setUserId] = useState("");
   const [session, setSession] = useState<Session | null>(null);
+  const [recipeTags, setTags] = useState<{ id: string; name: string }[]>([]);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -32,9 +35,20 @@ export default function UploadScreen() {
       setSession(session);
       setUserId(session?.user?.id || "");
     });
+
+    const fetchTags = async () => {
+      const { data, error } = await supabase.from('tags').select('id, name');
+      if (!error && data) {
+        setTags(data);
+      } else {
+        console.error("Error fetching tags", error);
+      }
+    };
+  
+    fetchTags();
   }, [])
 
-  const handleSelectVideo = async () => {
+  const handleSelectImage = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permissionResult.granted) {
       Alert.alert("Permission Required", "Permission to access media library is required!");
@@ -42,134 +56,219 @@ export default function UploadScreen() {
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['videos'],
+      mediaTypes: ['images'],
         allowsEditing: true,
         quality: 1,
       });
       
       if (!result.canceled && result.assets.length > 0) {
-        setVideoUri(result.assets[0].uri);
+        setImageUri(result.assets[0].uri);
       }
   };
 
   const handleUploadRecipe = async () => {
-    // if (!recipeTitle || !recipeDescription || !ingredients || !dietaryTags || !videoUri) {
-    //   Alert.alert("Missing Fields", "Please fill in all fields and select a video.");
-    //   return;
-    // }
-
-    setUploading(true);
-
+    if (!recipeTitle || !recipeDescription || !recipeSteps || !ingredients || !imageUri) {
+      Alert.alert("Missing Fields", "Please fill out all fields and select an image.");
+      return;
+    }
+  
     try {
-      // Fetch video file as a blob
-      const response = await fetch(videoUri);
-      const blob = await response.blob();
-
-      // Generate a unique file name using current timestamp and the original extension
-      const fileExt = videoUri.split('.').pop();
+      setUploading(true);
+  
+      const fileExt = imageUri.split('.').pop()?.toLowerCase();
       const fileName = `${Date.now()}.${fileExt}`;
-      const filePath = fileName;
-
-      // Upload video to Supabase storage (assumes a bucket named "videos" exists)
+      const filePath = `${userId}/${fileName}`;
+  
+      const fileContent = await FileSystem.readAsStringAsync(imageUri, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+  
+      const mimeType =
+        fileExt === 'png'
+          ? 'image/png'
+          : fileExt === 'jpg' || fileExt === 'jpeg'
+          ? 'image/jpeg'
+          : 'image/*';
+  
       const { error: uploadError } = await supabase.storage
-        .from('videos')
-        .upload(filePath, blob, {
-          contentType: 'video/mp4',
+        .from('images')
+        .upload(filePath, decode(fileContent), {
+          contentType: mimeType,
+          upsert: true,
         });
-
+  
       if (uploadError) {
-        Alert.alert("Upload Error", uploadError.message);
-        setUploading(false);
+        console.error(uploadError);
+        Alert.alert("Upload Error", "Failed to upload image.");
         return;
       }
-
-      // Get the public URL for the uploaded video
-      const { data: { publicUrl } } = supabase.storage
-        .from('videos')
+  
+      const { data: publicUrlData } = supabase.storage
+        .from('images')
         .getPublicUrl(filePath);
-
-      // Insert recipe details and video URL into the "recipes" table
-      const { error: insertError } = await supabase
-        .from('posts')
-        .insert([
-          {
-            created_at: new Date().toISOString(),
-            user_id: userId,
-            title: recipeTitle,
-            image_link: publicUrl,
-            description: recipeDescription,
-            recipe: ingredients,
-          },
-        ]);
-
+      const publicUrl = publicUrlData.publicUrl;
+  
+      console.log("Uploaded image URL:", publicUrl); 
+  
+      const { data: insertedPosts, error: insertError } = await supabase
+      .from('posts')
+      .insert([
+        {
+          created_at: new Date().toISOString(),
+          user_id: userId,
+          title: recipeTitle,
+          image_link: publicUrl,
+          description: recipeDescription,
+          ingredients: ingredients,
+          recipe: recipeSteps
+        },
+      ])
+      .select();
+  
       if (insertError) {
-        Alert.alert("Database Error", insertError.message);
-        setUploading(false);
+        console.error(insertError);
+        Alert.alert("Upload Error", "Failed to save recipe data.");
         return;
       }
 
+      const postId = insertedPosts[0].id;
+      if (selectedTags.length > 0) {
+        const tagInserts = selectedTags.map(tagId => ({
+          post_id: postId,
+          tag_id: tagId,
+        }));
+      
+        const { error: tagInsertError } = await supabase
+          .from('post_tags')
+          .insert(tagInserts);
+      
+        if (tagInsertError) {
+          console.error("Tag insert error:", tagInsertError);
+          Alert.alert("Warning", "Recipe uploaded, but tags failed to save.");
+        }
+      }
+  
       Alert.alert("Success", "Recipe uploaded successfully!");
-      router.push('(tabs)');
-    } catch (error) {
-      Alert.alert("Error", "An unexpected error occurred while uploading the recipe.");
+      setRecipeTitle('');
+      setRecipeDescription('');
+      setIngredients('');
+      setRecipeSteps('');
+      setImageUri(null);
+      router.push('/'); 
+  
+    } catch (err) {
+      console.error(err);
+      Alert.alert("Unexpected Error", "Something went wrong.");
     } finally {
       setUploading(false);
     }
   };
+  
 
   return (
-    <LinearGradient colors={['#EE9B00', '#BB3E03']} style={styles.gradient}>
-      <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.headerText}>Upload Your Recipe</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Recipe Name"
-          maxLength={500}
-          value={recipeTitle}
-          onChangeText={setRecipeTitle}
-        />
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <View style={styles.wrapper}>
+    <Text style={styles.headerText}>Upload Your Recipe</Text>
+      <ScrollView style={styles.container}>
+        <Text style={styles.sub}>Title</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="What's your recipe called?"
+            placeholderTextColor={"lightgray"}
+            maxLength={500}
+            value={recipeTitle}
+            onChangeText={setRecipeTitle}
+          />
+        <Text style={styles.sub}>Description</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Describe your recipe."
+            placeholderTextColor={"lightgray"}
+            maxLength={2000}
+            value={recipeDescription}
+            onChangeText={setRecipeDescription}
+            multiline
+          />
+        <Text style={styles.sub}>Ingredients (one per line)</Text>
+          <TextInput
+            style={[styles.input, styles.multilineInput]}
+            placeholder="What's in your recipe?"
+            placeholderTextColor={"lightgray"}
+            maxLength={2000}
+            value={ingredients}
+            onChangeText={setIngredients}
+            multiline
+          />
+        <Text style={styles.sub}>Steps (one per line)</Text>
+        <View>
         <TextInput
           style={[styles.input, styles.multilineInput]}
-          placeholder="Recipe Description"
+          placeholder="What are your recipe steps?"
+          placeholderTextColor={"lightgray"}
           maxLength={2000}
-          value={recipeDescription}
-          onChangeText={setRecipeDescription}
+          value={recipeSteps}
+          onChangeText={setRecipeSteps}
           multiline
         />
-        <TextInput
-          style={[styles.input, styles.multilineInput]}
-          placeholder="Ingredients (Must be separated by commas)"
-          maxLength={2000}
-          value={ingredients}
-          onChangeText={setIngredients}
-          multiline
-        />
-        <TouchableOpacity style={styles.button} onPress={handleSelectVideo}>
-          <Text style={styles.buttonText}>{videoUri ? "Video Selected" : "Select Video"}</Text>
+        <Text style={styles.sub}>Tags</Text>
+        <View style={[styles.tagContainer]}>
+          {recipeTags.map((tag) => {
+            const isSelected = selectedTags.includes(tag.id);
+            return (
+              <TouchableOpacity
+                key={tag.id}
+                style={[
+                  styles.tagButton,
+                  isSelected && styles.selectedTagButton
+                ]}
+                onPress={() => {
+                  setSelectedTags(prev =>
+                    prev.includes(tag.id)
+                      ? prev.filter(id => id !== tag.id)
+                      : [...prev, tag.id]
+                  );
+                }}
+              >
+              <Text style={[styles.tagText, isSelected && styles.selectedTagText]}>
+              {tag.name}
+            </Text>
+          </TouchableOpacity>
+          );
+        })}
+        </View>
+        </View>
+        <TouchableOpacity style={styles.button} onPress={handleSelectImage}>
+          <Text style={styles.buttonText}>{imageUri ? "Image Selected" : "Select Image"}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.button} onPress={handleUploadRecipe} disabled={uploading}>
           <Text style={styles.buttonText}>{uploading ? "Uploading..." : "Upload Recipe"}</Text>
         </TouchableOpacity>
       </ScrollView>
-    </LinearGradient>
+      </View>
+    </TouchableWithoutFeedback>
   );
 }
 
 const styles = StyleSheet.create({
-  gradient: {
+  wrapper: {
     flex: 1,
+    backgroundColor: '#F2F0EF',
   },
   container: {
-    paddingTop: 100,
-    paddingHorizontal: 20,
-    paddingBottom: 100,
+    flex: 1,
+    padding: 30,
   },
   headerText: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: 'white',
+    color: 'black',
     marginBottom: 20,
     textAlign: 'center',
+    paddingTop: 80,
+  },
+  sub: {
+    fontSize: 16,
+    color: '#757575',
   },
   input: {
     backgroundColor: 'white',
@@ -205,4 +304,28 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
   },
+  tagContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginVertical: 10,
+  },
+  tagButton: {
+    backgroundColor: '#fff',
+    borderColor: 'darkorange',
+    borderWidth: 1,
+    borderRadius: 20,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    margin: 4,
+  },
+  selectedTagButton: {
+    backgroundColor: 'darkorange',
+  },
+  tagText: {
+    color: 'darkorange',
+  },
+  selectedTagText: {
+    color: 'white',
+  },
+  
 });

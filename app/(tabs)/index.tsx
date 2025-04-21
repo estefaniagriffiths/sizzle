@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
-import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Modal, Pressable } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Modal, Pressable, ActivityIndicator } from 'react-native';
 import PostView from './PostView';
+import { supabase } from '../../lib/supabase';
+import { useRouter, useFocusEffect } from 'expo-router';
 
 //Vegan, Vegetarian, Gluten Free, Dairy Free, Kosher, Halal, Nut Free, Keto, Low Sodium, Low Sugar
 const TAGS = ['Vegan', 'Vegetarian', 'Dairy Free', 'Gluten Free', 'Nut Free', 'Halal', 'Kosher', 'Low Sugar', 'Low Sodium', 'Keto'];
@@ -8,6 +10,9 @@ const TAGS = ['Vegan', 'Vegetarian', 'Dairy Free', 'Gluten Free', 'Nut Free', 'H
 const HomeView = () => {
     const [modalVisible, setModalVisible] = useState(false);
     const [selectedTags, setSelectedTags] = useState<string[]>([]);
+    const [posts, setPosts] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    const router = useRouter();
 
     const toggleTag = (tag: string) => {
         setSelectedTags((prev) =>
@@ -16,6 +21,30 @@ const HomeView = () => {
             : [...prev, tag]
         );
     };
+
+    useFocusEffect(
+        useCallback(() => {
+            const fetchPosts = async () => {
+                const { data, error } = await supabase
+                .from('posts')
+                .select('id, created_at, user_id, title, image_link, description, ingredients, recipe, profiles:profiles!posts_user_id_fkey (username), post_tags(tags(name))')
+                .order('created_at', { ascending: false });
+            
+                console.log("Fetched posts:", data);
+            
+                if (error) {
+                console.error('Error fetching posts:', error);
+                } else {
+                setPosts(data || []);
+                }
+            
+                setLoading(false);
+            };
+            
+            fetchPosts();
+            }, [])
+    );
+
     return (
         <View style={styles.container}>
             <View style={styles.navigationBar}>
@@ -65,16 +94,18 @@ const HomeView = () => {
                 </View>
             </Modal>
 
-            <ScrollView style={styles.scrollView}>
-                <View style={{paddingVertical: 12}}>
-                    <PostView />
-                </View>
-                <View style={{paddingVertical: 12}}>
-                    <PostView />
-                </View>
-                <View style={{paddingVertical: 12}}>
-                    <PostView />
-                </View>
+            <ScrollView 
+            style={styles.scrollView}
+            contentContainerStyle={{ paddingBottom: 150 }}
+            showsVerticalScrollIndicator={false}
+            >
+            {loading ? (
+                <ActivityIndicator size="large" color="#BB3E03" />
+            ) : (
+                posts.map((post) => (
+                    <PostView key={post.id} post={post} />
+                ))
+            )}
             </ScrollView>
         </View>
     );

@@ -174,7 +174,7 @@ export default function UploadScreen() {
           <TextInput
             style={styles.input}
             placeholder="What's your recipe called?"
-            placeholderTextColor={"lightgray"}
+            placeholderTextColor={"darkgray"}
             maxLength={500}
             value={recipeTitle}
             onChangeText={setRecipeTitle}
@@ -183,28 +183,28 @@ export default function UploadScreen() {
           <TextInput
             style={styles.input}
             placeholder="Describe your recipe."
-            placeholderTextColor={"lightgray"}
+            placeholderTextColor={"darkgray"}
             maxLength={2000}
             value={recipeDescription}
             onChangeText={setRecipeDescription}
             multiline
           />
-        <Text style={styles.sub}>Ingredients (one per line)</Text>
+        <Text style={styles.sub}>Ingredients (one per new line)</Text>
           <TextInput
             style={[styles.input, styles.multilineInput]}
             placeholder="What's in your recipe?"
-            placeholderTextColor={"lightgray"}
+            placeholderTextColor={"darkgray"}
             maxLength={2000}
             value={ingredients}
             onChangeText={setIngredients}
             multiline
           />
-        <Text style={styles.sub}>Steps (one per line)</Text>
+        <Text style={styles.sub}>Steps (one per new line, no need to number!)</Text>
         <View>
         <TextInput
           style={[styles.input, styles.multilineInput]}
           placeholder="What are your recipe steps?"
-          placeholderTextColor={"lightgray"}
+          placeholderTextColor={"darkgray"}
           maxLength={2000}
           value={recipeSteps}
           onChangeText={setRecipeSteps}
@@ -268,7 +268,7 @@ const styles = StyleSheet.create({
   },
   sub: {
     fontSize: 16,
-    color: '#757575',
+    color: 'black',
   },
   input: {
     backgroundColor: 'white',

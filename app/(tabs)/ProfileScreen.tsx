@@ -102,7 +102,7 @@ export default function ProfileScreen() {
 
       {/* Header content: Username and Bio */}
       <View style={styles.header}>
-        <Text style={styles.username}>{username}</Text>
+        <Text style={styles.username}>@{username}</Text>
         {isEditing ? (
           <TextInput
             style={styles.textInput}
@@ -110,9 +110,12 @@ export default function ProfileScreen() {
             onChangeText={setEditedBio}
             multiline
             placeholder="Enter your bio"
+            maxLength={136}
           />
         ) : (
-          bio && <Text style={styles.bio}>{bio}</Text>
+          <Text style={styles.bio}>
+            {bio?.trim() ? bio : 'No bio yet.'}
+            </Text>
         )}
       </View>
 
@@ -188,7 +191,9 @@ const styles = StyleSheet.create({
     padding: 10,
     marginTop: 5,
     borderRadius: 4,
-    width: '100%',
+    textAlignVertical: 'top',
+    width: screenWidth - 100,
+    height: 90,
   },
   content: {
     flex: 1,

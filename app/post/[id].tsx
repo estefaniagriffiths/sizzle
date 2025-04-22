@@ -3,6 +3,7 @@ import { ScrollView, View, Text, StyleSheet, ActivityIndicator, TouchableOpacity
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Image as ExpoImage } from 'expo-image';
+import { Ionicons } from '@expo/vector-icons';
 
 type PostType = {
   id: string;
@@ -58,14 +59,14 @@ export default function PostDetail() {
     <ScrollView style={{ flex: 1, backgroundColor: 'white' }}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
-          <Text style={styles.backButton}>&lt;</Text>
+          <Ionicons name="arrow-back" size={28} color="black" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Post Details</Text>
         <View style={{ width: 28 }} />
       </View>
 
       <View style={{ padding: 20 }}>
-        <ExpoImage source={{ uri: post.image_link }} style={styles.image} contentFit="cover" />
+        <ExpoImage source={{ uri: post.image_link }} style={styles.image} contentFit="cover" transition={100} />
         <Text style={styles.title}>{post.title}</Text>
         <Text style={styles.username}>@{post.profiles?.username}</Text>
         <Text style={styles.description}>{post.description}</Text>

@@ -6,36 +6,37 @@ import { useRouter } from 'expo-router';
 
 export default function PostView({ post }: { post: any }) {
     const router = useRouter();
-    
+
     if (!post) return null;
 
     return (
         <View style={styles.card}>
             <TouchableOpacity onPress={() => router.push(`/post/${post.id}`)}>
-            <ExpoImage source={{ uri: post.image_link }} style={styles.image}
-            contentFit="cover"
-            transition={100}
-            />
-            </TouchableOpacity>
-            <View style={[styles.align_left, {padding: 12}]}>
-                <Text style={[styles.title, {paddingBottom: 6}]}>{post.title}</Text>
-                <Text style={{ paddingBottom: 12 }}>
-                    <Text style={{ fontWeight: 'bold' }}>@{post.profiles?.username}</Text> {post.description}
-                </Text>
-                {post.post_tags && post.post_tags.length > 0 && (
-                    <View style={[styles.hstack, { paddingBottom: 12, flexWrap: 'wrap' }]}>
-                        {post.post_tags.map((pt: any, index: number) => (
-                        <View key={index} style={{ paddingRight: 6, paddingBottom: 6 }}>
-                            <Text style={styles.tag}>{pt.tags.name}</Text>
+                <ExpoImage source={{ uri: post.image_link }} style={styles.image}
+                    contentFit="cover"
+                    transition={100}
+                />
+                <View style={[styles.align_left, {padding: 12}]}>
+                    <Text style={[styles.title, {paddingBottom: 6}]}>{post.title}</Text>
+                    <Text style={{ paddingBottom: 12 }}>
+                        <Text style={{ fontWeight: 'bold' }}>@{post.profiles?.username}</Text> {post.description}
+                    </Text>
+                    {post.post_tags && post.post_tags.length > 0 && (
+                        <View style={[styles.hstack, { paddingBottom: 12, flexWrap: 'wrap' }]}>
+                            {post.post_tags.map((pt: any, index: number) => (
+                                <View key={index} style={{ paddingRight: 6, paddingBottom: 6 }}>
+                                    <Text style={styles.tag}>{pt.tags.name}</Text>
+                                </View>
+                            ))}
                         </View>
-                        ))}
-                    </View>
                     )}
-                <View style={[styles.hstack, {justifyContent: 'space-between'}]}>
-                    <Ionicons name="chatbubble-outline" size={24} color="black" />
-                    <Ionicons name="bookmark-outline" size={24} color="black" />
-                    <Ionicons name="heart-outline" size={24} color="black" />
                 </View>
+            </TouchableOpacity>
+
+            <View style={[styles.hstack, {justifyContent: 'space-between', padding: 12 }]}>
+                <Ionicons name="chatbubble-outline" size={24} color="black" />
+                <Ionicons name="bookmark-outline" size={24} color="black" />
+                <Ionicons name="heart-outline" size={24} color="black" />
             </View>
         </View>
     );
@@ -86,13 +87,13 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-      },
-      loadingText: {
+    },
+    loadingText: {
         marginTop: 10,
         color: '#444',
         fontSize: 16,
-      },
-      card: {
+    },
+    card: {
         width: '100%',
         marginBottom: 20,
         borderRadius: 12,
@@ -103,5 +104,5 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.2,
         shadowRadius: 4,
         elevation: 3,
-      },
+    },
 });

@@ -5,7 +5,7 @@ import { supabase } from '../../lib/supabase';
 import { useRouter, useFocusEffect } from 'expo-router';
 
 //Vegan, Vegetarian, Gluten Free, Dairy Free, Kosher, Halal, Nut Free, Keto, Low Sodium, Low Sugar
-const TAGS = ['Vegan', 'Vegetarian', 'Dairy Free', 'Gluten Free', 'Nut Free', 'Halal', 'Kosher', 'Low Sugar', 'Low Sodium', 'Keto'];
+const TAGS = ['Vegan', 'Vegetarian', 'Dairy Free', 'Gluten Free', 'Nut Free', 'Halal', 'Kosher', 'Low Sugar', 'Low Sodium', 'Keto', 'Fish'];
 
 const HomeView = () => {
     const [modalVisible, setModalVisible] = useState(false);
@@ -44,6 +44,17 @@ const HomeView = () => {
             fetchPosts();
             }, [])
     );
+
+    const filteredPosts = selectedTags.length === 0
+        ? posts
+        : posts.filter((post) => {
+            const tagNames: string[] = post.post_tags?.map(
+            (pt: { tags: { name: string } }) => pt.tags.name
+            ) || [];
+    
+            return selectedTags.every((tag: string) => tagNames.includes(tag));
+        });
+
 
     return (
         <View style={styles.container}>
@@ -94,19 +105,19 @@ const HomeView = () => {
                 </View>
             </Modal>
 
-            <ScrollView 
-            style={styles.scrollView}
-            contentContainerStyle={{ paddingBottom: 150 }}
-            showsVerticalScrollIndicator={false}
-            >
-            {loading ? (
-                <ActivityIndicator size="large" color="#BB3E03" />
-            ) : (
-                posts.map((post) => (
-                    <PostView key={post.id} post={post} />
-                ))
-            )}
-            </ScrollView>
+            <ScrollView
+  style={styles.scrollView}
+  contentContainerStyle={{ paddingBottom: 150 }}
+  showsVerticalScrollIndicator={false}
+>
+  {loading ? (
+    <ActivityIndicator size="large" color="#BB3E03" />
+  ) : (
+    filteredPosts.map((post) => (
+      <PostView key={post.id} post={post} />
+    ))
+  )}
+</ScrollView>
         </View>
     );
 };
